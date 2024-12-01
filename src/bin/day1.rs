@@ -1,54 +1,55 @@
 use std::collections::HashMap;
 
-const INPUT: &str = include_str!("../../input/day1.txt");
-
-fn day1a() -> i32 {
-    let (mut vec1, mut vec2): (Vec<_>, Vec<_>) = INPUT
+fn parse_input() -> (Vec<i32>, Vec<i32>) {
+    include_str!("../../input/day1.txt")
         .lines()
         .map(|line| line.split_once("   ").unwrap())
         .map(|(part1, part2)| (part1.parse::<i32>().unwrap(), part2.parse::<i32>().unwrap()))
-        .unzip();
+        .unzip()
+}
 
-    vec1.sort();
-    vec2.sort();
-
-    vec1.iter().zip(&vec2).map(|(a, b)| (a - b).abs()).sum()
+fn day1a(mut vec1: Vec<i32>, mut vec2: Vec<i32>) -> u32 {
+    vec1.sort_unstable();
+    vec2.sort_unstable();
+    vec1.into_iter().zip(vec2).map(|(a, b)| a.abs_diff(b)).sum()
 }
 
 #[test]
 fn test_day1a() {
-    assert_eq!(day1a(), 1110981);
+    let (vec1, vec2) = parse_input();
+    assert_eq!(day1a(vec1, vec2), 1110981);
 }
 
-fn day1b() -> i32 {
-    let (vec1, vec2): (Vec<_>, Vec<_>) = INPUT
-        .lines()
-        .map(|line| line.split_once("   ").unwrap())
-        .map(|(part1, part2)| (part1.parse::<i32>().unwrap(), part2.parse::<i32>().unwrap()))
-        .unzip();
+fn day1b(vec1: &Vec<i32>, vec2: &Vec<i32>) -> i32 {
+    let counts = vec2.iter().fold(HashMap::new(), |mut acc, num| {
+        *acc.entry(num).or_insert(0) += 1;
+        acc
+    });
 
-    let mut counts = HashMap::new();
-
-    for num in &vec2 {
-        *counts.entry(num).or_insert(0) += 1;
-    }
-
-    let mut sum = 0;
-    for num in &vec1 {
-        if let Some(count) = counts.get(num) {
-            sum += num * count;
-        }
-    }
-    sum
+    vec1.iter()
+        .filter_map(|num| counts.get(num).map(|count| num * count))
+        .sum()
 }
 
 #[test]
 fn test_day1b() {
-    assert_eq!(day1b(), 24869388);
+    let (vec1, vec2) = parse_input();
+    assert_eq!(day1b(&vec1, &vec2), 24869388);
 }
 
 fn main() {
-    let sum = day1a();
-    let similarities = day1b();
-    println!("day1: {}, day2: {}", sum, similarities);
+    let start = std::time::Instant::now();
+    let (vec1, vec2) = parse_input();
+    let start_b = std::time::Instant::now();
+
+    let similarities = day1b(&vec1, &vec2);
+    let duration_b = start_b.elapsed();
+
+    let start_a = std::time::Instant::now();
+    let sum = day1a(vec1, vec2);
+    let duration_a = start_a.elapsed();
+    let duration = start.elapsed();
+    println!("day1a: {}, time: {:?}", sum, duration_a);
+    println!("day1b: {}, time: {:?}", similarities, duration_b);
+    println!("Total time: {:?}", duration);
 }
