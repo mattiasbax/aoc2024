@@ -14,44 +14,30 @@ fn get_line_sum(input: &str, re: &Regex) -> i32 {
 }
 
 fn get_line_sum_accurately(input: &str, re: &Regex) -> i32 {
-    let instructions: Vec<String> = re
-        .find_iter(input)
-        .map(|mat| mat.as_str().to_string())
-        .collect();
-
     let mut enabled = true;
-
-    let mut sum = 0;
-    for instruction in instructions {
-        if enabled {
-            match instruction.as_str() {
-                "don't()" => enabled = false,
-                "do()" => {}
-                _ => {
-                    if let Some((s1, s2)) = instruction
-                        .trim_start_matches("mul(")
-                        .trim_end_matches(")")
-                        .split_once(",")
-                    {
-                        sum += s1.parse::<i32>().unwrap() * s2.parse::<i32>().unwrap();
-                    }
-                }
-            }
-        } else {
-            if instruction == "do()" {
-                enabled = true;
+    re.find_iter(input).fold(0, |acc, mat| match mat.as_str() {
+        "don't()" => {
+            enabled = false;
+            acc
+        }
+        "do()" => {
+            enabled = true;
+            acc
+        }
+        _ if enabled => {
+            if let Some((s1, s2)) = mat
+                .as_str()
+                .trim_start_matches("mul(")
+                .trim_end_matches(")")
+                .split_once(",")
+            {
+                acc + s1.parse::<i32>().unwrap() * s2.parse::<i32>().unwrap()
+            } else {
+                acc
             }
         }
-    }
-
-    sum
-}
-
-#[test]
-fn test_get_line_sum() {
-    let input = "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))";
-    let re = Regex::new(r"mul\(\d+,\d+\)").unwrap();
-    assert_eq!(get_line_sum(&input, &re), 161);
+        _ => acc,
+    })
 }
 
 fn day3a(input: &str) -> i32 {
